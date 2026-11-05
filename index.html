@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>牌理 · 麻将出牌概率计算器</title>
+  <meta name="description" content="成都麻将 / 泸州十二鬼麻将的规则建模、约束蒙特卡洛与出牌推荐。">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f3d2e'/%3E%3Crect x='12' y='9' width='40' height='46' rx='7' fill='%23f6f0e2'/%3E%3Ctext x='32' y='41' font-size='28' text-anchor='middle' fill='%23b33a2b' font-family='serif'%3E中%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48"><rect x="5" y="3" width="38" height="42" rx="7" fill="#f7f1e3"/><text x="24" y="33" text-anchor="middle" font-family="serif" font-size="24" fill="#a9342a">牌</text></svg>
+        </div>
+        <div>
+          <div class="brand-title">牌理 <span>MAHJONG LAB</span></div>
+          <div class="brand-sub">规则建模 · 约束采样 · 期望损失排序</div>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="主导航">
+        <button class="tab active" data-tab="table">牌局录入</button>
+        <button class="tab" data-tab="scan">拍照识牌</button>
+        <button class="tab" data-tab="results">计算结论</button>
+        <button class="tab" data-tab="rules">规则假设</button>
+      </nav>
+      <div class="top-actions">
+        <button class="ghost-btn" id="btn-demo">载入示例</button>
+        <button class="primary-btn" id="btn-calc-top">开始计算</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="view active" id="view-table">
+        <div class="layout">
+          <aside class="panel input-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">01 / TABLE STATE</div>
+                <h1>把牌桌交给模型</h1>
+                <p>手牌、四家断门、副露、弃牌与牌墙。缺失项会用保守先验补齐，并在结果页标明。</p>
+              </div>
+              <span class="status-dot" id="state-dot">待计算</span>
+            </div>
+
+            <div class="rule-strip">
+              <label class="field">
+                <span>规则变体</span>
+                <select id="rule-preset">
+                  <option value="luzhou-ghost12">泸州鬼麻将 · 12 红中</option>
+                  <option value="chengdu-standard">成都麻将 · 血战到底</option>
+                  <option value="chengdu-noghost">成都麻将 · 3 番封顶</option>
+                  <option value="luzhou-ghost8">泸州鬼麻将 · 8 红中</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>风险档位 <b id="risk-label">均衡</b></span>
+                <input type="range" id="risk-level" min="1" max="5" step="1" value="3">
+                <div class="range-ticks"><i>极保守</i><i>均衡</i><i>极激进</i></div>
+              </label>
+            </div>
+
+            <div class="section-label"><span>我的手牌</span><em id="hand-count">0 张</em></div>
+            <div class="hand-zone" id="hand-zone">
+              <div class="tile-strip" id="hand-strip" aria-label="当前手牌"></div>
+              <div class="hand-empty" id="hand-empty">点击下方牌张加入手牌，或直接粘贴牌谱</div>
+            </div>
+            <div class="inline-input">
+              <input id="hand-text" type="text" placeholder="例如 123m456m789m123p55s，红中用 z5" autocomplete="off" spellcheck="false">
+              <button class="small-btn" id="btn-parse-hand">解析</button>
+              <button class="icon-btn" id="btn-clear-hand" title="清空手牌">×</button>
+            </div>
+
+            <div class="palette-wrap">
+              <div class="palette-tabs" id="palette-tabs">
+                <button class="active" data-suit="m">万</button>
+                <button data-suit="p">筒</button>
+                <button data-suit="s">条</button>
+                <button data-suit="z" id="palette-ghost-tab">鬼 / 字</button>
+              </div>
+              <div class="palette-target" id="palette-target">
+                <button class="active" data-target="hand">加到：手牌</button>
+                <button data-target="discard">加到：当前牌河</button>
+              </div>
+              <div class="palette" id="palette"></div>
+              <div class="palette-hint">点击加到目标；牌上的 × 移除。鬼牌可替代任意牌。当前牌河行由下方“四家断门与牌河”选中。</div>
+            </div>
+
+            <div class="section-label"><span>副露 / 杠</span><em id="meld-owner-label">自己</em></div>
+            <div class="melds" id="melds-list"></div>
+            <div class="meld-builder">
+              <select id="meld-owner">
+                <option value="0">自己</option><option value="1">下家</option><option value="2">对家</option><option value="3">上家</option>
+              </select>
+              <select id="meld-type"><option value="peng">碰</option><option value="gang">杠</option><option value="chi">吃</option></select>
+              <select id="meld-tile"></select>
+              <button class="small-btn" id="btn-add-meld">添加副露</button>
+            </div>
+
+            <div class="section-label"><span>四家断门与牌河</span><em>点行切换弃牌输入</em></div>
+            <div class="seats" id="seats"></div>
+
+            <div class="grid-2">
+              <label class="field">
+                <span>剩余牌墙</span>
+                <input id="wall-remaining" type="number" min="0" max="120" step="1" value="42">
+              </label>
+              <label class="field">
+                <span>对手模型</span>
+                <select id="opponent-model">
+                  <option value="mixed">混合先验（默认）</option>
+                  <option value="random">随机型</option>
+                  <option value="conservative">保守型</option>
+                  <option value="aggressive">激进型</option>
+                  <option value="read">按弃牌推断</option>
+                </select>
+              </label>
+            </div>
+
+            <details class="advanced">
+              <summary>计算参数与可复现设置</summary>
+              <div class="grid-2">
+                <label class="field"><span>采样次数</span><input id="samples" type="number" min="100" max="20000" step="100" value="10000"></label>
+                <label class="field"><span>随机种子</span><input id="seed" type="number" min="0" step="1" value="20261103"></label>
+                <label class="field"><span>对手听牌先验</span><input id="tenpai-prior" type="number" min="0" max="0.85" step="0.05" placeholder="自动"></label>
+                <label class="field"><span>风险系数 λ</span><input id="lambda" type="number" min="0" max="5" step="0.1" placeholder="跟随档位"></label>
+              </div>
+              <div class="quick-samples">
+                <span>快速：</span>
+                <button type="button" data-samples="1200">1.2k</button>
+                <button type="button" data-samples="5000">5k</button>
+                <button type="button" data-samples="10000">10k</button>
+                <button type="button" data-samples="20000">20k</button>
+              </div>
+              <label class="field" style="margin-top:8px"><span>其他可见牌（可选，如已亮出的牌）</span><input id="visible-extra" type="text" placeholder="例如 2m3p，红中用 z5" autocomplete="off" spellcheck="false"></label>
+              <p class="fineprint">默认 10,000 次采样、95% Wilson 区间。采样越多越稳定，但 12 鬼变体的单次模拟更重；快速按钮可先看排序。</p>
+            </details>
+
+            <div class="preflight" id="preflight"></div>
+            <div class="calc-row">
+              <button class="primary-btn wide" id="btn-calc">计算候选动作</button>
+              <div class="progress" id="progress"><div></div><span></span></div>
+            </div>
+            <p class="disclaimer">仅用于合法麻将娱乐与策略研究，不构成任何赌博建议。概率为模型估计，不是真实牌局承诺。</p>
+          </aside>
+
+          <section class="panel preview-panel">
+            <div class="panel-head compact">
+              <div>
+                <div class="eyebrow">LIVE READ</div>
+                <h2>当前局面</h2>
+              </div>
+              <button class="ghost-btn small" id="btn-goto-results">查看结论 →</button>
+            </div>
+            <div class="metrics" id="live-metrics">
+              <div class="metric"><span>向听</span><b id="m-shanten">—</b><small>有效向听</small></div>
+              <div class="metric"><span>缺门</span><b id="m-void">—</b><small>还需打出</small></div>
+              <div class="metric"><span>听牌</span><b id="m-waits">—</b><small>有效进张</small></div>
+              <div class="metric"><span>牌墙</span><b id="m-wall">—</b><small>剩余张数</small></div>
+            </div>
+            <div class="insight-grid">
+              <div class="insight-card">
+                <div class="insight-title">牌型拓扑</div>
+                <div id="live-topology" class="topology"></div>
+              </div>
+              <div class="insight-card">
+                <div class="insight-title">危险牌雷达</div>
+                <div id="live-danger" class="danger-list"></div>
+              </div>
+            </div>
+            <div class="insight-card path-card">
+              <div class="insight-title">当前胡牌路径 <span>条件概率贡献</span></div>
+              <div id="live-paths" class="path-list"><div class="empty">计算后显示 Top 路径</div></div>
+            </div>
+            <div class="notice" id="live-notice">
+              <b>先列假设，再算概率。</b> 未填写的断门/副露会被视为未知；系统会给出区间与先验，而不会伪造确定值。
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-scan">
+        <div class="layout scan-layout">
+          <aside class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">02 / VISION INPUT</div>
+                <h1>照片识牌，人工确认</h1>
+                <p>上传手牌或牌河照片，按张切分后识别；识别结果必须逐张确认，才可进入计算。</p>
+              </div>
+            </div>
+
+            <div class="scan-drop" id="scan-drop">
+              <input type="file" id="scan-file" accept="image/*" hidden>
+              <div class="scan-icon">＋</div>
+              <b>拖入照片，或点击选择</b>
+              <span>建议：正面俯拍、光线均匀、牌与牌之间留缝</span>
+              <button type="button" class="ghost-btn small" id="btn-sample-scan" style="margin-top:8px">没有照片？载入示例图</button>
+            </div>
+            <div class="scan-preview-wrap" id="scan-preview-wrap" hidden>
+              <canvas id="scan-preview"></canvas>
+              <div class="scan-controls">
+                <label class="field"><span>切分列数</span><input type="number" id="scan-cols" min="1" max="18" value="14"></label>
+                <label class="field"><span>切分行数</span><input type="number" id="scan-rows" min="1" max="4" value="1"></label>
+                <button class="small-btn" id="btn-split">重新切分</button>
+                <button class="ghost-btn small" id="btn-ai-scan">AI 识牌</button>
+              </div>
+              <div class="slice-grid" id="slice-grid"></div>
+              <div class="slice-palette">
+                <div class="palette" id="scan-palette"></div>
+              </div>
+              <div class="scan-apply">
+                <select id="scan-target">
+                  <option value="hand">应用到：我的手牌</option>
+                  <option value="discard-0">应用到：我的牌河</option>
+                  <option value="discard-1">应用到：下家牌河</option>
+                  <option value="discard-2">应用到：对家牌河</option>
+                  <option value="discard-3">应用到：上家牌河</option>
+                </select>
+                <button class="primary-btn" id="btn-apply-scan">确认并应用</button>
+              </div>
+            </div>
+
+            <details class="advanced" open>
+              <summary>识牌服务（可选）</summary>
+              <p class="fineprint">内置流程为“切分 + 人工确认”。若配置兼容 OpenAI Chat Completions 的视觉模型，可对整图自动识牌。密钥只保存在本机浏览器；也可由本地服务代理。</p>
+              <label class="field"><span>API Base</span><input id="vision-base" placeholder="https://api.openai.com/v1"></label>
+              <div class="grid-2">
+                <label class="field"><span>模型</span><input id="vision-model" placeholder="gpt-4o-mini"></label>
+                <label class="field"><span>API Key</span><input id="vision-key" type="password" placeholder="sk-..."></label>
+              </div>
+              <div class="inline-input">
+                <button class="small-btn" id="btn-save-vision">保存到本机</button>
+                <button class="ghost-btn small" id="btn-test-vision">测试连接</button>
+                <span class="fineprint" id="vision-status"></span>
+              </div>
+            </details>
+          </aside>
+
+          <section class="panel scan-guide">
+            <div class="panel-head compact"><div><div class="eyebrow">WORKFLOW</div><h2>三步完成</h2></div></div>
+            <ol class="steps">
+              <li><div><b>先录三家基础信息</b><span>在“牌局录入”里设置三家缺门、已碰/杠、已胡状态。照片只负责牌张，不负责规则。</span></div></li>
+              <li><div><b>再拍手牌与牌河</b><span>手牌 13/14 张用单行切分；牌河按实际行数切分。每张缩略图都可以点选校正。</span></div></li>
+              <li><div><b>最后人工确认</b><span>重点检查红中鬼、同花色 6/9、万/条误判。确认后应用，回到牌局录入点击计算。</span></div></li>
+            </ol>
+            <div class="notice accent">
+              <b>识别边界：</b>没有训练数据的纯前端 CV 无法稳定识别实体麻将牌。这里的“自动”有两种含义：① 切分与 AI 视觉模型辅助；② 逐张人工确认。我们不会把未确认的识别结果直接用于概率计算。
+            </div>
+            <div class="sample-scan">
+              <div class="sample-tile"><b>中</b><span>鬼牌 12 张</span></div>
+              <div class="sample-tile"><b>6</b><span>条 / 万易混</span></div>
+              <div class="sample-tile"><b>9</b><span>筒 / 条易混</span></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-results">
+        <div class="result-head">
+          <div>
+            <div class="eyebrow">03 / DECISION</div>
+            <h1 id="result-title">还没有计算结果</h1>
+            <p id="result-subtitle">先在“牌局录入”填写手牌，或载入示例。</p>
+          </div>
+          <div class="result-actions">
+            <button class="ghost-btn" id="btn-export">导出 JSON</button>
+            <button class="primary-btn" id="btn-recalc">重新计算</button>
+          </div>
+        </div>
+        <div id="results-root" class="results-root">
+          <div class="empty-state panel">
+            <div class="empty-mark">聽</div>
+            <h3>等待一副牌</h3>
+            <p>计算会输出候选动作、自摸/点炮区间、风险调整得分、Top 路径与敏感性分析。</p>
+            <button class="primary-btn" id="btn-empty-demo">载入示例并计算</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-rules">
+        <div class="layout rules-layout">
+          <aside class="panel">
+            <div class="panel-head"><div><div class="eyebrow">04 / RULES</div><h1>规则配置表</h1><p>用户配置优先；未配置项标注默认假设。切换变体会重算牌张容量与计分。</p></div></div>
+            <div id="rule-table" class="rule-table"></div>
+            <div class="notice">
+              <b>泸州十二鬼：</b>120 张 = 万/筒/条各 36 + 红中 12。红中为万能鬼；鬼牌打出后他家不能碰/杠/胡。计分采用你提供的 40 颗表，自摸计、放炮折半，平胡不能点炮胡。
+            </div>
+          </aside>
+          <section class="panel rules-doc">
+            <div class="panel-head compact"><div><div class="eyebrow">ASSUMPTIONS</div><h2>数据缺口与不确定性</h2></div></div>
+            <div id="assumption-list" class="assumption-list"></div>
+            <h3>可复现参数</h3>
+            <pre id="repro-box" class="codebox">未计算</pre>
+            <h3>接口 / 伪代码</h3>
+            <pre class="codebox">RuleConfig → GameState → HandAnalyzer
+  → OpponentModel.sample() → ProbabilityEngine
+  → LossEvaluator → Recommender
+
+P_win_top(a) = Σ path_weight × P(no_opponent_first)
+L(a) = -P_win(a)·E_score(a) + λ_r·Risk(a) + C_wait(a)</pre>
+            <p class="fineprint">完整实现位于 <code>js/analyzer.js</code>、<code>js/engine.js</code>；单元测试位于 <code>tests/</code>。</p>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="vision-modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head"><b>设置视觉识牌</b><button class="icon-btn" id="btn-close-vision">×</button></div>
+      <p class="fineprint">调用兼容 OpenAI 的视觉接口。浏览器直连可能受 CORS 限制；推荐用本地 server 的 /api/vision 代理。</p>
+      <label class="field"><span>API Base</span><input id="modal-vision-base" placeholder="https://api.openai.com/v1"></label>
+      <label class="field"><span>模型</span><input id="modal-vision-model" placeholder="gpt-4o-mini"></label>
+      <label class="field"><span>API Key</span><input id="modal-vision-key" type="password"></label>
+      <div class="modal-actions"><button class="ghost-btn" id="btn-cancel-vision">取消</button><button class="primary-btn" id="btn-confirm-vision">保存</button></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

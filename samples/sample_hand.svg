@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="190" viewBox="0 0 1260 190">
+  <rect width="1260" height="190" fill="#0d352a"/>
+  <g font-family="Songti SC, SimSun, serif" text-anchor="middle">
+    <g transform="translate(14,18)">
+      <g transform="translate(0,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#b2382c">一</text><text x="38" y="118" font-size="18" fill="#b2382c">万</text></g>
+      <g transform="translate(88,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#b2382c">四</text><text x="38" y="118" font-size="18" fill="#b2382c">万</text></g>
+      <g transform="translate(176,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#b2382c">七</text><text x="38" y="118" font-size="18" fill="#b2382c">万</text></g>
+      <g transform="translate(264,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#b2382c">二</text><text x="38" y="118" font-size="18" fill="#b2382c">万</text></g>
+      <g transform="translate(352,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#b2382c">五</text><text x="38" y="118" font-size="18" fill="#b2382c">万</text></g>
+      <g transform="translate(440,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#b2382c">八</text><text x="38" y="118" font-size="18" fill="#b2382c">万</text></g>
+      <g transform="translate(528,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#275a7d">二</text><text x="38" y="118" font-size="18" fill="#275a7d">筒</text></g>
+      <g transform="translate(616,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#275a7d">五</text><text x="38" y="118" font-size="18" fill="#275a7d">筒</text></g>
+      <g transform="translate(704,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#275a7d">八</text><text x="38" y="118" font-size="18" fill="#275a7d">筒</text></g>
+      <g transform="translate(792,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#2a6b46">三</text><text x="38" y="118" font-size="18" fill="#2a6b46">条</text></g>
+      <g transform="translate(880,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#2a6b46">六</text><text x="38" y="118" font-size="18" fill="#2a6b46">条</text></g>
+      <g transform="translate(968,0)"><rect width="76" height="148" rx="9" fill="#f7f1e3" stroke="#c9bda7"/><text x="38" y="82" font-size="48" fill="#2a6b46">九</text><text x="38" y="118" font-size="18" fill="#2a6b46">条</text></g>
+      <g transform="translate(1056,0)"><rect width="76" height="148" rx="9" fill="#f8e7bb" stroke="#c9a968"/><text x="38" y="82" font-size="48" fill="#8e3c46">中</text><text x="38" y="118" font-size="18" fill="#8e3c46">鬼</text></g>
+      <g transform="translate(1144,0)"><rect width="76" height="148" rx="9" fill="#f8e7bb" stroke="#c9a968"/><text x="38" y="82" font-size="48" fill="#8e3c46">中</text><text x="38" y="118" font-size="18" fill="#8e3c46">鬼</text></g>
+    </g>
+  </g>
+</svg>

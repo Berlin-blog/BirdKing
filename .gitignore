@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# local environment / secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# logs & runtime
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# test & build output
+coverage/
+dist/
+build/
+tmp/
+.tmp/
+
+# editors & OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

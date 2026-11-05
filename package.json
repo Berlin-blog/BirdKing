@@ -1,0 +1,30 @@
+{
+  "name": "birdking",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "成都 / 泸州十二鬼麻将的规则建模、约束蒙特卡洛与出牌期望损失计算器",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Berlin-blog/BirdKing.git"
+  },
+  "homepage": "https://github.com/Berlin-blog/BirdKing#readme",
+  "bugs": {
+    "url": "https://github.com/Berlin-blog/BirdKing/issues"
+  },
+  "keywords": [
+    "mahjong",
+    "monte-carlo",
+    "probability",
+    "chengdu",
+    "luzhou",
+    "game-analysis"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node tests/analyzer_test.mjs && node tests/engine_test.mjs"
+  }
+}
